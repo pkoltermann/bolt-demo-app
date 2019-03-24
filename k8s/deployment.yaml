@@ -1,0 +1,89 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+    name: php-app
+    labels:
+        app.kubernetes.io/name: php-demo-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app.kubernetes.io/name: php-demo-app
+    template:
+        metadata:
+            labels:
+                app.kubernetes.io/name: php-demo-app
+        spec:
+#                imagePullSecrets:
+#                    - name:name {{.Values.imagePullSecret }}
+            volumes:
+                - name: shared-web
+                  emptyDir: {}
+                - name: shared-socket
+                  emptyDir: {}
+                - name: bolt-config
+                  configMap:
+                      name: bolt-config
+                - name: nginx-config
+                  configMap:
+                      name: nginx-config
+                - name: files
+                  persistentVolumeClaim:
+                      claimName: myclaim
+            containers:
+                - name: php
+                  image: pkoltermann/bolt-app-k8s
+                  command: ["/usr/local/bin/entrypoint-k8s"]
+                  args: ["php-fpm7.3", "-F"]
+                  imagePullPolicy: Always
+                  env:
+                      - name: PHP_FPM_LISTEN
+                        value: '/var/run/php/php.sock'
+                      - name: PHP_FPM_LISTEN_MODE
+                        value: "0666"
+                      - name: APP_ENV
+                        value: prod
+                  volumeMounts:
+                      - name: shared-web
+                        mountPath: /shared_web
+                        readOnly: false
+                      - name: shared-socket
+                        mountPath: /var/run/php
+                        readOnly: false
+                      - name: files
+                        mountPath: /data/application/web/files
+                      - name: bolt-config
+                        mountPath: /data/application/app/config/config.yml
+                        subPath: config.yml
+                - name: nginx
+                  image: nginx:1.15.9
+                  imagePullPolicy: IfNotPresent
+                  ports:
+                      - name: http
+                        containerPort: 80
+                        protocol: TCP
+#                  livenessProbe:
+#                      httpGet:
+#                          path: /
+#                          port: http
+#                  readinessProbe:
+#                      httpGet:
+#                          path: /
+#                          port: http
+                  volumeMounts:
+                      - name: shared-web
+                        mountPath: /data/application/web
+                        readOnly: false
+                      - name: shared-socket
+                        mountPath: /var/run/php
+                        readOnly: false
+                      - name: nginx-config
+                        mountPath: /etc/nginx/conf.d/default.conf
+                        subPath: default.conf
+                        readOnly: true
+                      - name: nginx-config
+                        mountPath: /etc/nginx/nginx.conf
+                        subPath: nginx.conf
+                        readOnly: true
+                      - name: files
+                        mountPath: /data/application/web/files

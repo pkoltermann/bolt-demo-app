@@ -1,0 +1,18 @@
+FROM kolemp/php:7.3
+ENV COMPOSER_CACHE_DIR "/tmp/composer-cache"
+ENV BOLT_WEB_DIR "web"
+
+RUN chown www-data:www-data /data
+USER www-data
+WORKDIR /data
+RUN composer create-project bolt/composer-install:3.6.x application --prefer-dist --no-interaction && \
+    rm -rf /tmp/composer-cache
+WORKDIR /data/application
+
+COPY --chown=www-data:www-data config.yml /data/application/app/config/config.yml
+
+RUN composer install --no-scripts && \
+    composer run-script post-create-project-cmd && \
+    composer run-script post-install-cmd
+
+USER root

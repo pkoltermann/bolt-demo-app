@@ -2,6 +2,9 @@
 
 namespace Bundle\Site;
 
+use Monolog\Handler\ErrorLogHandler;
+use Monolog\Logger;
+use Silex\Application;
 use Bolt\Extension\SimpleExtension;
 
 /**
@@ -17,4 +20,13 @@ use Bolt\Extension\SimpleExtension;
  */
 class CustomisationExtension extends SimpleExtension
 {
+    public function boot(Application $app)
+{
+    parent::boot($app);
+    /** @var Logger $logger */
+    $logger = $app['logger.system'];
+    $logger->pushHandler(
+        new ErrorLogHandler()
+    );
+}
 }

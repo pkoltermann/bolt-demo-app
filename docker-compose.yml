@@ -4,6 +4,7 @@ services:
         image: kolemp/php:7.3
         volumes:
             - ./bolt-app:/data/application
+            - ./k8s/app/config.yml:/data/application/app/config/config.yml
             - socket:/var/run/php
         depends_on:
           - mysql
@@ -34,5 +35,7 @@ services:
             MYSQL_USER: bolt
             MYSQL_PASSWORD: bolt
             MYSQL_ROOT_PASSWORD: sth_random
+    redis:
+        image: redis
 volumes:
     socket:

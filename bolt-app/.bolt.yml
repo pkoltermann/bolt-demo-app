@@ -1,4 +1,4 @@
 paths:
-    web: web
+    web: '%site%/web'
 extensions:
     - Bundle\Site\CustomisationExtension
